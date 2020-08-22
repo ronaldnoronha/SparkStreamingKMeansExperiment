@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/SparkStreamingKMeansExperiment.iml" filepath="$PROJECT_DIR$/.idea/SparkStreamingKMeansExperiment.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SparkStreamingKMeansExperiment.iml" filepath="$PROJECT_DIR$/.idea/modules/SparkStreamingKMeansExperiment.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SparkStreamingKMeansExperiment-build.iml" filepath="$PROJECT_DIR$/.idea/modules/SparkStreamingKMeansExperiment-build.iml" />
     </modules>
   </component>
 </project>

@@ -1,0 +1,7 @@
+[0m[[0m[31merror[0m] [0m[0m/Users/ronnie/Documents/SparkStreamingKMeansExperiment/src/main/scala/PredictKMeans.scala:56:80: illegal start of simple expression[0m
+[0m[[0m[31merror[0m] [0m[0m        println(streamingModel.predict(i(1).split(" ").map(_.toDouble).map(x =>)))[0m
+[0m[[0m[31merror[0m] [0m[0m                                                                               ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/ronnie/Documents/SparkStreamingKMeansExperiment/src/main/scala/PredictKMeans.scala:57:7: ')' expected but '}' found.[0m
+[0m[[0m[31merror[0m] [0m[0m      }[0m
+[0m[[0m[31merror[0m] [0m[0m      ^[0m
+[0m[[0m[31merror[0m] [0m[0mtwo errors found[0m

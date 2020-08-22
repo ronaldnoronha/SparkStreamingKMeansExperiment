@@ -77,9 +77,24 @@ def stop():
     stopSparkCluster()
 
 def runExperiment():
+    os.system('sbt package')
     # transfer file
     transfer = Transfer(master)
     transfer.put('./kafkaProducer.py')
-
+    # start start cluster
+    startSparkCluster()
     # start kafka
     startKafka()
+    # transfer jar
+    transfer.put('./target/scala-2.12/sparkstreamingkmeansexperiment_2.12-0.1.jar')
+
+    master.run(
+            'source /etc/profile && cd $SPARK_HOME && bin/spark-submit '
+            '--packages org.apache.spark:spark-streaming-kafka-0-10_2.12:3.0.0 '
+            '--class example.stream.PredictKMeans '
+            '--master spark://' + str(masterHost) + ':7077 --executor-memory 2g '
+            '~/sparkstreamingkmeansexperiment_2.12-0.1.jar '
+            '192.168.122.54:9092 '
+            'consumer-group '
+            'test'
+        )
