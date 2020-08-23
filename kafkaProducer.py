@@ -37,10 +37,9 @@ while True:
     features, target = create_data(8000,3,centers,3)
     for i in range(len(features)):
         message = str(datetime.now()) + ',' + ' '.join([str(j) for j in features[i]]) + ',' + str(target[i])
-#         print(message)
-#         print(sys.getsizeof(message))
         totalSent += sys.getsizeof(message)
         producer.send('test', value=message)
+        # print(message)
 
     t2= time.time()
     print(t2)

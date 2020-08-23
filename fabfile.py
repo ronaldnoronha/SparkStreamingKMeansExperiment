@@ -98,3 +98,14 @@ def runExperiment():
             'consumer-group '
             'test'
         )
+
+    # master.run(
+    #     'source /etc/profile && cd $SPARK_HOME && bin/spark-submit '
+    #     # '--packages org.apache.spark:spark-streaming-kafka-0-10_2.12:3.0.0 '
+    #     '--class example.stream.PredictKMeans '
+    #     # '--master spark://' + str(masterHost) + ':7077 --executor-memory 2g '
+    #                                             '~/sparkstreamingkmeansexperiment_2.12-0.1.jar '
+    #                                             # '192.168.122.54:9092 '
+    #                                             # 'consumer-group '
+    #                                             # 'test'
+    # )
