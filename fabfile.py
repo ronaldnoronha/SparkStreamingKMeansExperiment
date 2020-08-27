@@ -80,7 +80,7 @@ def runExperiment():
     os.system('sbt package')
     # transfer file
     transfer = Transfer(master)
-    transfer.put('./kafkaProducer.py')
+    transfer.put('kafkaProducer.py')
     # start start cluster
     startSparkCluster()
     # start kafka

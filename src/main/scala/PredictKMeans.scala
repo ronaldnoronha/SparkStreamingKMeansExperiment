@@ -61,12 +61,12 @@ object PredictKMeans {
 
     inputLines.foreachRDD( rdd => {
       for (i <- rdd) {
-        for (j <- i){
-          println(j)
-        }
-//        val point = Vectors.dense(i(1).split(" ").map(_.toDouble))
+//        for (j <- i){
+//          println(j)
+//        }
+        val point = Vectors.dense(i(1).split(" ").map(_.toDouble))
 //        println(point.toString())
-//        println(i(0)+" "+"Prediction: "+streamingModel.predict(point)+ " Target: "+i(2)+" "+LocalDateTime.now().toString())
+        println(i(0)+" "+"Prediction: "+streamingModel.predict(point)+ " Target: "+i(2)+" "+LocalDateTime.now().toString())
       }
     })
 
