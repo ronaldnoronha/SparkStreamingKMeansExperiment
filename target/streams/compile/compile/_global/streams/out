@@ -1,4 +1,6 @@
-[0m[[0m[31merror[0m] [0m[0m/Users/ronnie/Documents/SparkStreamingKMeansExperiment/src/main/scala/PredictKMeans.scala:69:64: not found: value point[0m
-[0m[[0m[31merror[0m] [0m[0m        println(i(0)+" "+"Prediction: "+streamingModel.predict(point)+ " Target: "+i(2)+" "+LocalDateTime.now().toString())[0m
-[0m[[0m[31merror[0m] [0m[0m                                                               ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/ronnie/Documents/SparkStreamingKMeansExperiment/src/main/scala/PredictKMeans.scala:63:29: type mismatch;[0m
+[0m[[0m[31merror[0m] [0m[0m found   : org.apache.spark.streaming.dstream.DStream[Int][0m
+[0m[[0m[31merror[0m] [0m[0m required: org.apache.spark.streaming.dstream.DStream[String][0m
+[0m[[0m[31merror[0m] [0m[0m    val result = time.union(prediction)[0m
+[0m[[0m[31merror[0m] [0m[0m                            ^[0m
 [0m[[0m[31merror[0m] [0m[0mone error found[0m

@@ -54,26 +54,73 @@ object PredictKMeans {
     val messages = KafkaUtils.createDirectStream[String, String](
       ssc,
       LocationStrategies.PreferConsistent,
-      ConsumerStrategies.Subscribe[String, String](topicsSet, kafkaParams))
+      ConsumerStrategies.Subscribe[String, String](topicsSet, kafkaParams)).map(_.value).map(_.stripPrefix("\"").trim).map(_.stripSuffix("\"").trim)
 
-    val strippedMessages = messages.map(_.value).map(_.split("\""))
-    val inputLines = strippedMessages.map(_(1).split(","))
+    val lineMessages = messages.map(_.split(","))
 
-    inputLines.foreachRDD( rdd => {
+    lineMessages.foreachRDD(rdd=> {
       for (i <- rdd) {
-//        for (j <- i){
-//          println(j)
-//        }
-        val point = Vectors.dense(i(1).split(" ").map(_.toDouble))
-//        println(point.toString())
-        println(i(0)+" "+"Prediction: "+streamingModel.predict(point)+ " Target: "+i(2)+" "+LocalDateTime.now().toString())
+        println(i(0)+" "+"Prediction: "+streamingModel.predict(Vectors.dense(i(1).split(" ").map(_.toDouble)))+
+          " Target: "+i(2)+" "+LocalDateTime.now().toString())
       }
     })
 
-    ssc.start()
-    ssc.awaitTerminationOrTimeout(120000)
-    ssc.stop()
 
+//    val time = lineMessages.map(_(0)+" ")
+//    val prediction = lineMessages.map(_(1).split(" ").map(_.toDouble)).map(Vectors.dense(_)).map(streamingModel.predict(_))
+//    val target = lineMessages.map(_(2))
+//    val result = time.union(prediction.map(_.toString()))
+
+//    val time = lineMessages.map(_(0)+ " " + LocalDateTime.now().toString())
+//    val prediction = rdd.map(_(1).split(" ").map(_.toDouble)).map(Vectors.dense(_)).map(streamingModel.predict(_))
+//
+//    val result = lineMessages.transform{ rdd =>
+//      rdd.map(_(0)+" Prediction: "+(_(1).split(" ").map(_.toDouble))
+//        .map(Vectors.dense(_))
+//        .map(streamingModel.predict(_)))
+//    }
+//    val result = lineMessages.map(_(0)+" Prediction: "+
+//      _(1).split(" ").map(_.toDouble)
+
+//    val point = lineMessages.map(_(0)+" "+_(1))
+
+//    +(rdd(1).split(" ").map(_.toDouble)).map(Vectors.dense(_)).map(streamingModel.predict(_))
+//    val point = lineMessages.map(_(0)+" "+_(1).split(" ").map(_.toDouble))
+
+//    val result = lineMessages()
+//    +lineMessages.map(_(1)+" ")
+    // test 2
+//    time.print()
+//    result.print()
+
+    // test 3
+//    result.print()
+
+//    val result = lineMessages
+
+//        val strippedMessages = messages.map(_.value).map(_.split("\""))
+//    strippedMessages.foreachRDD( rdd => {
+//      for (i <- rdd) {
+//        for (j <- i) {
+//          println(j)
+//        }
+//      }
+//    })
+//    val inputLines = strippedMessages.map(_(1).split(","))
+//
+//    inputLines.foreachRDD( rdd => {
+//      for (i <- rdd) {
+//        //        for (j <- i){
+//        //          println(j)
+//        //        }
+//        val point = Vectors.dense(i(1).split(" ").map(_.toDouble))
+//        println(point.toJson)
+//        //        println(i(0)+" "+"Prediction: "+streamingModel.predict(point)+ " Target: "+i(2)+" "+LocalDateTime.now().toString())
+//      }
+//    })
+
+    ssc.start()
+    ssc.awaitTerminationOrTimeout(60000)
 
   }
 }
