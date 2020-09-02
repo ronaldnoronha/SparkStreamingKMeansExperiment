@@ -1,1 +1,1 @@
-["example.stream.PredictKMeans"]
+["example.stream.PredictKMeans","example.stream.StructuredKafkaWordCount"]

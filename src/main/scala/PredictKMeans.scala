@@ -39,8 +39,6 @@ object PredictKMeans {
       println(i)
     }
 
-//    val broadcastModel = ssc.broadcast(streamingModel)
-
     val brokers = args(0)
     val groupId = args(1)
     val topics = args(2)
@@ -54,26 +52,27 @@ object PredictKMeans {
     val messages = KafkaUtils.createDirectStream[String, String](
       ssc,
       LocationStrategies.PreferConsistent,
-      ConsumerStrategies.Subscribe[String, String](topicsSet, kafkaParams))
+      ConsumerStrategies.Subscribe[String, String](topicsSet, kafkaParams)).map(_.value).map(_.stripPrefix("\"").trim).map(_.stripSuffix("\"").trim)
 
-    val strippedMessages = messages.map(_.value).map(_.split("\""))
-    val inputLines = strippedMessages.map(_(1).split(","))
+    val count = ssc.sparkContext.longAccumulator("Counter")
+    val correct = ssc.sparkContext.longAccumulator("Correct Prediction")
 
-    inputLines.foreachRDD( rdd => {
+    val lineMessages = messages.map(_.split(","))
+    lineMessages.foreachRDD( rdd => {
       for (i <- rdd) {
-//        for (j <- i){
-//          println(j)
-//        }
-        val point = Vectors.dense(i(1).split(" ").map(_.toDouble))
-//        println(point.toString())
-        println(i(0)+" "+"Prediction: "+streamingModel.predict(point)+ " Target: "+i(2)+" "+LocalDateTime.now().toString())
+        count.add(1)
+        val point = streamingModel.predict(Vectors.dense(i(1).split(" ").map(_.toDouble)))
+        if (point==i(2).toInt) {
+          correct.add(1)
+        }
       }
     })
 
     ssc.start()
-    ssc.awaitTerminationOrTimeout(120000)
-    ssc.stop()
+    ssc.awaitTerminationOrTimeout(45000)
 
+    println("Total number of messages received: " + count.value)
+    println("Total correct predictions: "+correct.value)
 
   }
 }

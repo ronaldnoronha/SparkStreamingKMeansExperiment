@@ -30,7 +30,6 @@ with open('centers.csv','r') as f:
         centers.append(center)
 
 producer = KafkaProducer(bootstrap_servers=['192.168.122.54:9092'], value_serializer = lambda x: dumps(x).encode('utf-8'))
-sleep(20)
 totalSent = 0
 t1 = time.time()
 while True:
