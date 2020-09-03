@@ -32,9 +32,12 @@ sudopass = Responder(pattern=r'\[sudo\] password:',
                      response='1\n',
                      )
 
-def startSparkCluster():
-    master.run('source /etc/profile && $SPARK_HOME/sbin/start-all.sh')
-    # c2.run('cd /usr/local/spark && ./sbin/start-slaves.sh')
+def startSparkCluster(n='3'):
+    # start master
+    master.run('source /etc/profile && $SPARK_HOME/sbin/start-master.sh')
+    # start slaves
+    for i in range(int(n)):
+        slaveConnections[i].run('source /etc/profile && $SPARK_HOME/sbin/start-slave.sh spark://192.168.122.54:7077')
 
 
 def stopSparkCluster():
@@ -100,28 +103,6 @@ def runExperiment():
         )
     stop()
 
-def testStructured():
-    os.system('sbt package')
-    # transfer file
-    transfer = Transfer(master)
-    transfer.put('kafkaProducer.py')
-    # start start cluster
-    startSparkCluster()
-    # start kafka
-    startKafka()
-    # transfer jar
-    transfer.put('./target/scala-2.12/sparkstreamingkmeansexperiment_2.12-0.1.jar')
 
-    master.run(
-        'source /etc/profile && cd $SPARK_HOME && bin/spark-submit '
-        '--packages org.apache.spark:spark-streaming-kafka-0-10_2.12:3.0.0 '
-        '--class example.stream.StructuredKafkaWordCount '
-        '--master spark://' + str(masterHost) + ':7077 --executor-memory 2g '
-        '~/sparkstreamingkmeansexperiment_2.12-0.1.jar '
-        '192.168.122.54:9092 '
-        'consumer-group '
-        'test'
-    )
-    stop()
 
 

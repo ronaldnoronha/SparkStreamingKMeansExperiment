@@ -44,14 +44,3 @@ while True:
     print(t2)
     print('Total sent:')
     print(str(totalSent)+' bytes in '+str(t2-t1)+ ' seconds')
-
-
-
-
-
-
-
-
-
-
-
