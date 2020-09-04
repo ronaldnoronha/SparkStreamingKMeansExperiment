@@ -57,7 +57,7 @@ def restartAllVMs():
         pass
 
 
-def startKafka():
+def startKafka(dataSize='100000'):
     master.run('tmux new -d -s kafka')
     master.run('tmux new-window')
     master.run('tmux new-window')
@@ -67,7 +67,7 @@ def startKafka():
     master.run('tmux send -t kafka:1 /home/ronald/kafka_2.12-2.5.0/bin/kafka-server-start.sh\ '
                '/home/ronald/kafka_2.12-2.5.0/config/server.properties ENTER')
     sleep(10)
-    master.run('tmux send -t kafka:2 python3\ /home/ronald/kafkaProducer.py ENTER')
+    master.run('tmux send -t kafka:2 python3\ /home/ronald/kafkaProducer.py\ '+dataSize+' ENTER')
 
 
 def stopKafka():
@@ -76,7 +76,6 @@ def stopKafka():
 
 def stop():
     stopKafka()
-    # stopDatagenerator()
     stopSparkCluster()
 
 def runExperiment():
