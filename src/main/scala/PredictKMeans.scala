@@ -1,11 +1,11 @@
 package example.stream
 
-import java.time.LocalDateTime
-
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
 
 import scala.io.Source
+import java.time.{LocalDateTime, Duration}
+import java.lang.Long
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.clustering.{KMeansModel, StreamingKMeansModel}
 import org.apache.spark.mllib.linalg
@@ -14,10 +14,13 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.streaming.kafka010.{ConsumerStrategies, KafkaUtils, LocationStrategies}
 import org.apache.spark.streaming.{Seconds, StreamingContext}
 
+
+
 //import org.pmml4s.model.Model
 
 object PredictKMeans {
   def main(args: Array[String]): Unit = {
+    println("Started at "+LocalDateTime.now().toString())
     val filename = "/home/ronald/kmeansModel"
     val lines = Source.fromFile(filename).getLines.toArray.map(_.drop(1).dropRight(1)).map(_.split(","))
 
@@ -56,6 +59,7 @@ object PredictKMeans {
 
     val count = ssc.sparkContext.longAccumulator("Counter")
     val correct = ssc.sparkContext.longAccumulator("Correct Prediction")
+    val time = ssc.sparkContext.collectionAccumulator[Long]("Creation time")
 
     val lineMessages = messages.map(_.split(","))
     lineMessages.foreachRDD( rdd => {
@@ -65,6 +69,8 @@ object PredictKMeans {
         if (point==i(2).toInt) {
           correct.add(1)
         }
+
+        time.add(Duration.between(LocalDateTime.parse(i(0).split(" ").mkString("T")),LocalDateTime.now()).toNanos())
       }
     })
 
@@ -74,5 +80,12 @@ object PredictKMeans {
     println("Total number of messages received: " + count.value)
     println("Total correct predictions: "+correct.value)
 
+    println(time.value.size())
+    var sum = 0.0
+    for (i<-time.value.toArray()){
+      println(i.asScala.toDouble)
+    }
+    println(sum)
+    println("Finished at "+LocalDateTime.now().toString())
   }
 }
