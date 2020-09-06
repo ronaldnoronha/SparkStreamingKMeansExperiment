@@ -25,7 +25,7 @@ class ProducerWorker(Thread):
     def __init__(self,number, dataSize, centers):
         Thread.__init__(self)
         self.title = number
-        self.producer = KafkaProducer(bootstrap_servers=['192.168.122.54:9092'],
+        self.producer = KafkaProducer(bootstrap_servers=['192.168.122.121:9092'],
                                      value_serializer = lambda x: dumps(x).encode('utf-8'))
         self.dataSize = dataSize
         self.centers = centers
