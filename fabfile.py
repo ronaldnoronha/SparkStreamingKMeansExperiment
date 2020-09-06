@@ -58,6 +58,11 @@ def restartAllVMs():
         master.sudo('shutdown -r now')
     except:
         pass
+    try:
+        kafka.sudo('shutdown -r now')
+    except:
+        pass
+
 
 
 def startKafka(dataSize='100000'):
