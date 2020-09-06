@@ -59,7 +59,7 @@ object PredictKMeans {
 
     val count = ssc.sparkContext.longAccumulator("Counter")
     val correct = ssc.sparkContext.longAccumulator("Correct Prediction")
-    val time = ssc.sparkContext.collectionAccumulator[Long]("Creation time")
+    val time = ssc.sparkContext.collectionAccumulator[Double]("Creation time")
 
     val lineMessages = messages.map(_.split(","))
     lineMessages.foreachRDD( rdd => {
@@ -70,7 +70,7 @@ object PredictKMeans {
           correct.add(1)
         }
 
-        time.add(Duration.between(LocalDateTime.parse(i(0).split(" ").mkString("T")),LocalDateTime.now()).toNanos())
+        time.add(Duration.between(LocalDateTime.parse(i(0).split(" ").mkString("T")),LocalDateTime.now()).toNanos().toDouble)
       }
     })
 
@@ -80,12 +80,13 @@ object PredictKMeans {
     println("Total number of messages received: " + count.value)
     println("Total correct predictions: "+correct.value)
 
-    println(time.value.size())
-    var sum = 0.0
-    for (i<-time.value.toArray()){
-      println(i.asScala.toDouble)
-    }
-    println(sum)
+//    println(time.value.size())
+//    var sum = 0.toDouble
+//    for (i<-time.value.toArray()){
+////      println(i.getClass)
+//    }
+//    println(sum/time.value.size(
+    //    ))
     println("Finished at "+LocalDateTime.now().toString())
   }
 }
