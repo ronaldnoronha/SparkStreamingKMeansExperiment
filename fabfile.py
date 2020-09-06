@@ -26,8 +26,11 @@ with open('./conf/slaves', 'r') as f:
     while array:
         slaveConnections.append(Connection(host=array[0], config=configSlaves, gateway=conn))
         array = f.readline().split()
-
-
+with open('./conf/kafka', 'r') as f:
+    array = f.readline().split()
+    kafka = Connection(host=array[0], config=Config(overrides={'user': user,
+                                                                         'connect_kwargs': {'password': '1'},
+                                                                         'sudo': {'password': '1'}}), gateway=conn)
 sudopass = Responder(pattern=r'\[sudo\] password:',
                      response='1\n',
                      )
@@ -58,20 +61,20 @@ def restartAllVMs():
 
 
 def startKafka(dataSize='100000'):
-    master.run('tmux new -d -s kafka')
-    master.run('tmux new-window')
-    master.run('tmux new-window')
-    master.run('tmux send -t kafka:0 /home/ronald/kafka_2.12-2.5.0/bin/zookeeper-server-start.sh\ '
+    kafka.run('tmux new -d -s kafka')
+    kafka.run('tmux new-window')
+    kafka.run('tmux new-window')
+    kafka.run('tmux send -t kafka:0 /home/ronald/kafka_2.12-2.5.0/bin/zookeeper-server-start.sh\ '
                '/home/ronald/kafka_2.12-2.5.0/config/zookeeper.properties ENTER')
     sleep(5)
-    master.run('tmux send -t kafka:1 /home/ronald/kafka_2.12-2.5.0/bin/kafka-server-start.sh\ '
+    kafka.run('tmux send -t kafka:1 /home/ronald/kafka_2.12-2.5.0/bin/kafka-server-start.sh\ '
                '/home/ronald/kafka_2.12-2.5.0/config/server.properties ENTER')
     sleep(10)
-    master.run('tmux send -t kafka:2 python3\ /home/ronald/kafkaProducer.py\ '+dataSize+' ENTER')
+    kafka.run('tmux send -t kafka:2 python3\ /home/ronald/kafkaProducer.py\ '+dataSize+' ENTER')
 
 
 def stopKafka():
-    master.run('tmux kill-session -t kafka')
+    kafka.run('tmux kill-session -t kafka')
 
 
 def stop():
@@ -82,7 +85,8 @@ def runExperiment():
     os.system('sbt package')
     # transfer file
     transfer = Transfer(master)
-    transfer.put('kafkaProducer.py')
+    transferKafka = Transfer(kafka)
+    transferKafka.put('kafkaProducer.py')
     # start start cluster
     startSparkCluster()
     # start kafka
