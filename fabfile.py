@@ -100,7 +100,7 @@ def runExperiment():
             '--class example.stream.PredictKMeans '
             '--master spark://' + str(masterHost) + ':7077 --executor-memory 2g '
             '~/sparkstreamingkmeansexperiment_2.12-0.1.jar '
-            '192.168.122.54:9092 '
+            '192.168.122.121:9092 '
             'consumer-group '
             'test'
         )
