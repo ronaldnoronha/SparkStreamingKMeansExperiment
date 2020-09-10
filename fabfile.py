@@ -74,7 +74,6 @@ def startKafka(dataSize='100000'):
     sleep(5)
     kafka.run('tmux send -t kafka:1 /home/ronald/kafka_2.12-2.5.0/bin/kafka-server-start.sh\ '
                '/home/ronald/kafka_2.12-2.5.0/config/server.properties ENTER')
-    sleep(10)
     kafka.run('tmux send -t kafka:2 python3\ /home/ronald/kafkaProducer.py\ '+dataSize+' ENTER')
 
 
@@ -87,15 +86,20 @@ def stop():
     stopSparkCluster()
 
 def runExperiment():
-    os.system('sbt package')
     # transfer file
     transfer = Transfer(master)
     transferKafka = Transfer(kafka)
+    # Transfer producer
     transferKafka.put('kafkaProducer.py')
+    # start kafka
+    startKafka('10000000')
+    # SBT packaging
+    os.system('sbt package')
     # start start cluster
     startSparkCluster()
-    # start kafka
-    startKafka()
+    # Transfer files to master
+    transferKafka.get('/home/ronald/centers.csv')
+    transfer.put('./centers.csv')
     # transfer jar
     transfer.put('./target/scala-2.12/sparkstreamingkmeansexperiment_2.12-0.1.jar')
 
