@@ -5,7 +5,7 @@ from sklearn.datasets import make_blobs
 from datetime import datetime
 import csv
 import sys
-import time
+from time import sleep
 from threading import Thread
 
 def create_data(n_samples, n_features, centers, std):
@@ -48,14 +48,19 @@ if __name__ == "__main__":
     print('Producing :'+ str(amountOfData)+' bytes of data')
     amountOfDataPerThread = amountOfData/4
 
-    # import the centers
-    centers = []
-    with open('centers.csv','r') as f:
-        csvReader = csv.DictReader(f)
-        for row in csvReader:
-            center = [float(row[i]) for i in row]
-            centers.append(center)
-
+    # Create Centers for production
+    centers, cluster_num = create_data(8, 3, 8, 3)
+    with open('centers.csv', 'w') as f:
+        fieldnames = ['x', 'y', 'z']
+        writer = csv.DictWriter(f, fieldnames)
+        writer.writeheader()
+        for i in range(len(centers)):
+            dct = {}
+            for j in range(len(centers[i])):
+                dct[fieldnames[j]] = centers[i][j]
+            #         dct[fieldnames[len(centers[i])]] = cluster_num[i]
+            writer.writerow(dct)
+    sleep(5)
     # Start thread
     for i in range(4):
         worker = ProducerWorker(i, amountOfDataPerThread, centers)
