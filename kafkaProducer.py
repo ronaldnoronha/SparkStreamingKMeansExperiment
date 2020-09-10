@@ -5,7 +5,7 @@ from sklearn.datasets import make_blobs
 from datetime import datetime
 import csv
 import sys
-from time import sleep
+from time import sleep, time
 from threading import Thread
 
 def create_data(n_samples, n_features, centers, std):
@@ -32,21 +32,27 @@ class ProducerWorker(Thread):
 
     def run(self):
         totalSent = 0
-        print('Thread ' + str(self.dataSize) + ' sent ' + str(totalSent) + ' bytes')
+        t1 = time()
+        print('Thread ' + str(self.title) + ' sent ' + str(totalSent) + ' bytes')
+        numMessages = 0
         while totalSent < self.dataSize:
             features, target = create_data(8, 3, centers, 3)
+            numMessages+=8
             for i in range(len(features)):
                 message = str(datetime.now()) + ',' + ' '.join([str(j) for j in features[i]]) + ',' + str(target[i])
                 totalSent += sys.getsizeof(message)
                 self.producer.send('test', value=message)
 
-        print('Thread '+str(self.title)+' sent '+str(totalSent)+' bytes')
+        print('Thread '+str(self.title)+' sent '+str(totalSent)+' bytes and '+str(numMessages)+ ' in '+ str(time()-t1) +' seconds')
 
 if __name__ == "__main__":
     amountOfData = int(sys.argv[1])
+    numberOfThreads = max(int(amountOfData / 2500000), 4)
 
-    print('Producing :'+ str(amountOfData)+' bytes of data')
-    amountOfDataPerThread = amountOfData/4
+    print('Producing :'+ str(amountOfData)+' bytes of data with '+str(numberOfThreads))
+
+
+    amountOfDataPerThread = amountOfData/numberOfThreads
 
     # Create Centers for production
     centers, cluster_num = create_data(8, 3, 8, 3)
@@ -62,6 +68,6 @@ if __name__ == "__main__":
             writer.writerow(dct)
     sleep(5)
     # Start thread
-    for i in range(4):
+    for i in range(numberOfThreads):
         worker = ProducerWorker(i, amountOfDataPerThread, centers)
         worker.start()

@@ -1,4 +1,4 @@
-[0m[[0m[31merror[0m] [0m[0m/Users/ronnie/Documents/SparkStreamingKMeansExperiment/src/main/scala/PredictKMeans.scala:28:38: not found: value LocalDateTime[0m
-[0m[[0m[31merror[0m] [0m[0m    println("Starting Training at "+ LocalDateTime.now())[0m
-[0m[[0m[31merror[0m] [0m[0m                                     ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/ronnie/Documents/SparkStreamingKMeansExperiment/src/main/scala/PredictKMeans.scala:99:26: no arguments allowed for nullary method awaitTermination: ()Unit[0m
+[0m[[0m[31merror[0m] [0m[0m    ssc.awaitTermination(120000)[0m
+[0m[[0m[31merror[0m] [0m[0m                         ^[0m
 [0m[[0m[31merror[0m] [0m[0mone error found[0m

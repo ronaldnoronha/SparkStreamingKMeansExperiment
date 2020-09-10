@@ -92,7 +92,7 @@ def runExperiment():
     # Transfer producer
     transferKafka.put('kafkaProducer.py')
     # start kafka
-    startKafka('10000000')
+    startKafka('100000000')
     # SBT packaging
     os.system('sbt package')
     # start start cluster
@@ -113,7 +113,7 @@ def runExperiment():
             'consumer-group '
             'test'
         )
-    stop()
+    # stop()
 
 
 
