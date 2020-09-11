@@ -85,14 +85,18 @@ def stop():
     stopKafka()
     stopSparkCluster()
 
-def runExperiment():
+def runExperiment(dataSize='1000000'):
+    # transfer monitor
+    transferMonitor()
+    # start Monitor
+    startMonitor()
     # transfer file
     transfer = Transfer(master)
     transferKafka = Transfer(kafka)
     # Transfer producer
     transferKafka.put('kafkaProducer.py')
     # start kafka
-    startKafka('100000000')
+    startKafka(dataSize)
     # SBT packaging
     os.system('sbt package')
     # start start cluster
@@ -111,10 +115,43 @@ def runExperiment():
             '~/sparkstreamingkmeansexperiment_2.12-0.1.jar '
             '192.168.122.121:9092 '
             'consumer-group '
-            'test'
+            'test '
+            '30000'
         )
     # stop()
+    # transfer logs
+    stopMonitor()
+    transferLogs()
+    # Restart all VMs
+    # restartAllVMs()
+
+def startMonitor():
+    for connection in slaveConnections+[master, kafka]:
+        connection.run('nohup python3 ./monitor.py $1 >/dev/null 2>&1 &')
+
+def stopMonitor():
+    for connection in slaveConnections+[master, kafka]:
+        connection.run('pid=$(cat logs/pid) && kill -SIGTERM $pid')
+
+def transferLogs():
+    counter = 1
+    for connection in slaveConnections:
+        transfer = Transfer(connection)
+        transfer.get('logs/log.csv', 'log_slave' + str(counter) + '.csv')
+        counter += 1
+    transfer = Transfer(master)
+    transfer.get('logs/log.csv', 'log_master.csv')
+    transfer = Transfer(kafka)
+    transfer.get('logs/log.csv', 'log_kafka.csv')
 
 
+
+def transferMonitor():
+    for connection in slaveConnections+[master, kafka]:
+        connection.run('rm monitor.py')
+        connection.run('rm -rf logs')
+        transfer = Transfer(connection)
+        transfer.put('monitor.py')
+        connection.run('mkdir logs')
 
 

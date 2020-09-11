@@ -57,6 +57,7 @@ object PredictKMeans {
     val brokers = args(0)
     val groupId = args(1)
     val topics = args(2)
+    val applicationDuration = args(3).toInt
 
     val topicsSet = topics.split(",").toSet
     val kafkaParams = Map[String, Object](
@@ -78,9 +79,7 @@ object PredictKMeans {
       } else {
         emptyRDD.reset()
       }
-//      if (emptyRDD.value>150L) {
-//        ssc.stop()
-//      }
+
       val points = rdd.map(_(1).split(" ").map(_.toDouble)).map(x=>Vectors.dense(x))
       model.update(points, 1.0, "batches")
       val modelCenters = model.clusterCenters
@@ -96,7 +95,7 @@ object PredictKMeans {
     })
 
     ssc.start()
-    ssc.awaitTerminationOrTimeout(750000)
+    ssc.awaitTerminationOrTimeout(applicationDuration)
     println("Streaming stopped at "+LocalDateTime.now())
     ssc.stop()
 

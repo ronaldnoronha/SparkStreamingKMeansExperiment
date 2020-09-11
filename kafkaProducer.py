@@ -47,7 +47,7 @@ class ProducerWorker(Thread):
 
 if __name__ == "__main__":
     amountOfData = int(sys.argv[1])
-    numberOfThreads = max(int(amountOfData / 2500000), 4)
+    numberOfThreads = min(max(int(amountOfData / 2500000), 4),100)
 
     print('Producing :'+ str(amountOfData)+' bytes of data with '+str(numberOfThreads))
 
