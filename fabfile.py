@@ -35,7 +35,7 @@ sudopass = Responder(pattern=r'\[sudo\] password:',
                      response='1\n',
                      )
 
-def startSparkCluster(n='3'):
+def startSparkCluster(n='1'):
     # start master
     master.run('source /etc/profile && $SPARK_HOME/sbin/start-master.sh')
     # start slaves
@@ -65,7 +65,7 @@ def restartAllVMs():
 
 
 
-def startKafka(dataSize='100000'):
+def startKafka(dataSize='1000'):
     kafka.run('tmux new -d -s kafka')
     kafka.run('tmux new-window')
     kafka.run('tmux new-window')
@@ -74,7 +74,8 @@ def startKafka(dataSize='100000'):
     sleep(5)
     kafka.run('tmux send -t kafka:1 /home/ronald/kafka_2.12-2.5.0/bin/kafka-server-start.sh\ '
                '/home/ronald/kafka_2.12-2.5.0/config/server.properties ENTER')
-    kafka.run('tmux send -t kafka:2 python3\ /home/ronald/kafkaProducer.py\ '+dataSize+' ENTER')
+    kafka.run('tmux send -t kafka:2 python3\ /home/ronald/kafkaProducer.py\ ' + dataSize + ' ENTER')
+
 
 
 def stopKafka():
@@ -85,18 +86,22 @@ def stop():
     stopKafka()
     stopSparkCluster()
 
-def runExperiment():
+def runExperiment(dataSize='1000',clusters='1'):
+    # transfer monitor
+    transferMonitor()
+    # start Monitor
+    startMonitor()
     # transfer file
     transfer = Transfer(master)
     transferKafka = Transfer(kafka)
     # Transfer producer
     transferKafka.put('kafkaProducer.py')
     # start kafka
-    startKafka('10000000')
+    startKafka(dataSize)
     # SBT packaging
     os.system('sbt package')
     # start start cluster
-    startSparkCluster()
+    startSparkCluster(clusters)
     # Transfer files to master
     transferKafka.get('/home/ronald/centers.csv')
     transfer.put('./centers.csv')
@@ -111,10 +116,46 @@ def runExperiment():
             '~/sparkstreamingkmeansexperiment_2.12-0.1.jar '
             '192.168.122.121:9092 '
             'consumer-group '
-            'test'
+            'test1 '
+            '1000000'
         )
+
+    # transfer logs
+    stopMonitor()
+    transferLogs()
+    # Restart all VMs
     stop()
+    # restartAllVMs()
+
+def startMonitor():
+    for connection in slaveConnections+[master, kafka]:
+        connection.run('nohup python3 ./monitor.py $1 >/dev/null 2>&1 &')
+
+def stopMonitor():
+    for connection in slaveConnections+[master, kafka]:
+        connection.run('pid=$(cat logs/pid) && kill -SIGTERM $pid')
+
+def transferLogs():
+    counter = 1
+    for connection in slaveConnections:
+        transfer = Transfer(connection)
+        transfer.get('logs/log.csv', 'log_slave' + str(counter) + '.csv')
+        counter += 1
+    transfer = Transfer(master)
+    transfer.get('logs/log.csv', 'log_master.csv')
+    transfer = Transfer(kafka)
+    transfer.get('logs/log.csv', 'log_kafka.csv')
 
 
 
+def transferMonitor():
+    for connection in slaveConnections+[master, kafka]:
+        connection.run('rm monitor.py')
+        connection.run('rm -rf logs')
+        transfer = Transfer(connection)
+        transfer.put('monitor.py')
+        connection.run('mkdir logs')
 
+def transferToKafka(filename):
+    transfer = Transfer(kafka)
+    transfer.put(filename)

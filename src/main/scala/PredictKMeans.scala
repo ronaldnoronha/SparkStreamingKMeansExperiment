@@ -52,10 +52,12 @@ object PredictKMeans {
     val model = new StreamingKMeansModel(centers,weights)
     val count = ssc.sparkContext.longAccumulator("Counter")
     val correct = ssc.sparkContext.longAccumulator("Correct")
+    val emptyRDD = ssc.sparkContext.longAccumulator("Empty RDDs")
 
     val brokers = args(0)
     val groupId = args(1)
     val topics = args(2)
+    val applicationDuration = args(3).toInt
 
     val topicsSet = topics.split(",").toSet
     val kafkaParams = Map[String, Object](
@@ -70,10 +72,14 @@ object PredictKMeans {
 
     val inputLines = messages.map(_.split(","))
 
-//    val points = inputLines.map(_(1).split(" ").map(_.toDouble)).map(x => Vectors.dense(x))
-
     // train model
     inputLines.foreachRDD(rdd => {
+      if (rdd.isEmpty()) {
+        emptyRDD.add(1)
+      } else {
+        emptyRDD.reset()
+      }
+
       val points = rdd.map(_(1).split(" ").map(_.toDouble)).map(x=>Vectors.dense(x))
       model.update(points, 1.0, "batches")
       val modelCenters = model.clusterCenters
@@ -89,10 +95,13 @@ object PredictKMeans {
     })
 
     ssc.start()
-    ssc.awaitTerminationOrTimeout(120000)
+    ssc.awaitTerminationOrTimeout(applicationDuration)
+    println("Streaming stopped at "+LocalDateTime.now())
+    ssc.stop()
 
     println("Number of messages: "+ count.value)
     println("Number of correct predictions: "+ correct.value)
+    println("Number of empty RDDs: "+ emptyRDD.value)
   }
 
   def checkPrediction(realCenters:Array[linalg.Vector], modelCenters:Array[linalg.Vector]) : Array[Int] = {
