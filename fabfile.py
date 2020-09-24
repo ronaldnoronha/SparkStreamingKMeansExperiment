@@ -6,6 +6,7 @@ from invoke import Responder
 from fabric2.transfer import Transfer
 import os
 from time import sleep
+from datetime import datetime
 
 with open('./conf/master', 'r') as f:
     array = f.readline().split()
@@ -40,7 +41,7 @@ def startSparkCluster(n='1'):
     master.run('source /etc/profile && $SPARK_HOME/sbin/start-master.sh')
     # start slaves
     for i in range(int(n)):
-        slaveConnections[i].run('source /etc/profile && $SPARK_HOME/sbin/start-slave.sh spark://192.168.122.54:7077')
+        slaveConnections[i].run('source /etc/profile && $SPARK_HOME/sbin/start-slave.sh spark://'+str(masterHost)+':7077')
 
 
 def stopSparkCluster():
@@ -64,75 +65,46 @@ def restartAllVMs():
         pass
 
 
-
-def startKafka(dataSize='1000'):
-    kafka.run('tmux new -d -s kafka')
-    kafka.run('tmux new-window')
-    kafka.run('tmux new-window')
-    kafka.run('tmux send -t kafka:0 /home/ronald/kafka_2.12-2.5.0/bin/zookeeper-server-start.sh\ '
-               '/home/ronald/kafka_2.12-2.5.0/config/zookeeper.properties ENTER')
-    sleep(5)
-    kafka.run('tmux send -t kafka:1 /home/ronald/kafka_2.12-2.5.0/bin/kafka-server-start.sh\ '
-               '/home/ronald/kafka_2.12-2.5.0/config/server.properties ENTER')
-    kafka.run('tmux send -t kafka:2 python3\ /home/ronald/kafkaProducer.py\ ' + dataSize + ' ENTER')
-
-
-
-def stopKafka():
-    kafka.run('tmux kill-session -t kafka')
-
-
 def stop():
-    stopKafka()
     stopSparkCluster()
 
-def runExperiment(dataSize='1000',clusters='1'):
+def runExperiment(clusters='1'):
     # transfer monitor
     transferMonitor()
     # start Monitor
     startMonitor()
     # transfer file
     transfer = Transfer(master)
-    transferKafka = Transfer(kafka)
-    # Transfer producer
-    transferKafka.put('kafkaProducer.py')
-    # start kafka
-    startKafka(dataSize)
+    # Transfer Producer
+    transfer.put('transferFile.py')
     # SBT packaging
     os.system('sbt package')
     # start start cluster
     startSparkCluster(clusters)
-    # Transfer files to master
-    transferKafka.get('/home/ronald/centers.csv')
-    transfer.put('./centers.csv')
     # transfer jar
     transfer.put('./target/scala-2.12/sparkstreamingkmeansexperiment_2.12-0.1.jar')
-
+    print(datetime.now().__str__())
+    transferFile(clusters)
     master.run(
             'source /etc/profile && cd $SPARK_HOME && bin/spark-submit '
-            '--packages org.apache.spark:spark-streaming-kafka-0-10_2.12:3.0.0 '
             '--class example.stream.PredictKMeans '
             '--master spark://' + str(masterHost) + ':7077 --executor-memory 2g '
             '~/sparkstreamingkmeansexperiment_2.12-0.1.jar '
-            '192.168.122.121:9092 '
-            'consumer-group '
-            'test1 '
-            '1000000'
+            '450000'
         )
-
     # transfer logs
-    stopMonitor()
-    transferLogs()
+    # stopMonitor()
+    # transferLogs()
     # Restart all VMs
     stop()
     # restartAllVMs()
 
 def startMonitor():
-    for connection in slaveConnections+[master, kafka]:
+    for connection in slaveConnections+[master]:
         connection.run('nohup python3 ./monitor.py $1 >/dev/null 2>&1 &')
 
 def stopMonitor():
-    for connection in slaveConnections+[master, kafka]:
+    for connection in slaveConnections+[master]:
         connection.run('pid=$(cat logs/pid) && kill -SIGTERM $pid')
 
 def transferLogs():
@@ -143,19 +115,47 @@ def transferLogs():
         counter += 1
     transfer = Transfer(master)
     transfer.get('logs/log.csv', 'log_master.csv')
-    transfer = Transfer(kafka)
-    transfer.get('logs/log.csv', 'log_kafka.csv')
-
 
 
 def transferMonitor():
-    for connection in slaveConnections+[master, kafka]:
+    for connection in slaveConnections+[master]:
         connection.run('rm monitor.py')
         connection.run('rm -rf logs')
         transfer = Transfer(connection)
         transfer.put('monitor.py')
         connection.run('mkdir logs')
 
-def transferToKafka(filename):
-    transfer = Transfer(kafka)
+def transferToMaster(filename):
+    transfer = Transfer(master)
     transfer.put(filename)
+
+def createFile():
+    transfer = []
+    for connection in slaveConnections:
+        transfer.append(Transfer(connection))
+    for connection in transfer:
+        connection.put('./centers.txt')
+        connection.put('./createFile.py')
+        connection.put('./transferFile.py')
+    for connection in slaveConnections:
+        connection.run('tmux new -d -s createFile')
+        connection.run('tmux send -t createFile python3\ ~/createFile.py\ 1000000\ 120 ENTER')
+
+def closeCreateFile():
+    for connection in slaveConnections:
+        connection.run('tmux kill-session -t createFile')
+
+def transferFile(clusters='1'):
+    transfer = []
+    for i in range(int(clusters)):
+        transfer.append(Transfer(slaveConnections[i]))
+    for connection in transfer:
+        connection.put('./transferFile.py')
+    for i in range(int(clusters)):
+        slaveConnections[i].run('tmux new -d -s transferFile')
+        slaveConnections[i].run('tmux send -t transferFile python3\ ~/transferFile.py ENTER')
+
+def closeTransferFile(clusters='1'):
+    for i in range(int(clusters)):
+        slaveConnections[i].run('tmux kill-session -t transferFile')
+        slaveConnections[i].run('rm ~/data/*.txt')

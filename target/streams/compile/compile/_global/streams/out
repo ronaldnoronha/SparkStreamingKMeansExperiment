@@ -1,4 +1,7 @@
-[0m[[0m[31merror[0m] [0m[0m/Users/ronnie/Documents/SparkStreamingKMeansExperiment/src/main/scala/PredictKMeans.scala:99:26: no arguments allowed for nullary method awaitTermination: ()Unit[0m
-[0m[[0m[31merror[0m] [0m[0m    ssc.awaitTermination(120000)[0m
-[0m[[0m[31merror[0m] [0m[0m                         ^[0m
-[0m[[0m[31merror[0m] [0m[0mone error found[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/ronnie/Documents/SparkStreamingKMeansExperiment/src/main/scala/PredictKMeans.scala:62:21: not found: value topics[0m
+[0m[[0m[31merror[0m] [0m[0m    val topicsSet = topics.split(",").toSet[0m
+[0m[[0m[31merror[0m] [0m[0m                    ^[0m
+[0m[[0m[31merror[0m] [0m[0m/Users/ronnie/Documents/SparkStreamingKMeansExperiment/src/main/scala/PredictKMeans.scala:73:24: value filestream is not a member of org.apache.spark.streaming.StreamingContext[0m
+[0m[[0m[31merror[0m] [0m[0m    val messages = ssc.filestream("/home/ronald/data")[0m
+[0m[[0m[31merror[0m] [0m[0m                       ^[0m
+[0m[[0m[31merror[0m] [0m[0mtwo errors found[0m

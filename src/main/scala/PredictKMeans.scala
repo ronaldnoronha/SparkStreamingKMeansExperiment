@@ -41,34 +41,38 @@ object PredictKMeans {
     }
 
     // Get real centers
-    val filename = "/home/ronald/centers.csv"
-    val lines = Source.fromFile(filename).getLines.toArray.map(_.drop(1).dropRight(1)).map(_.split(","))
+//    val filename = "/home/ronald/centers.csv"
+//    val lines = Source.fromFile(filename).getLines.toArray.map(_.drop(1).dropRight(1)).map(_.split(","))
 
-    val realCenters: Array[linalg.Vector] = new Array[linalg.Vector](lines.length - 1)
-    for (i <- 1 to lines.length - 1) {
-      realCenters(i - 1) = Vectors.dense(lines(i).map(_.toDouble))
-    }
+//    val realCenters: Array[linalg.Vector] = new Array[linalg.Vector](lines.length - 1)
+//    for (i <- 1 to lines.length - 1) {
+//      realCenters(i - 1) = Vectors.dense(lines(i).map(_.toDouble))
+//    }
 
     val model = new StreamingKMeansModel(centers,weights)
     val count = ssc.sparkContext.longAccumulator("Counter")
-    val correct = ssc.sparkContext.longAccumulator("Correct")
+//    val correct = ssc.sparkContext.longAccumulator("Correct")
     val emptyRDD = ssc.sparkContext.longAccumulator("Empty RDDs")
 
-    val brokers = args(0)
-    val groupId = args(1)
-    val topics = args(2)
-    val applicationDuration = args(3).toInt
+//    val brokers = args(0)
+//    val groupId = args(1)
+//    val topics = args(2)
+    val applicationDuration = args(0).toInt
 
-    val topicsSet = topics.split(",").toSet
-    val kafkaParams = Map[String, Object](
-      ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG -> brokers,
-      ConsumerConfig.GROUP_ID_CONFIG -> groupId,
-      ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG -> classOf[StringDeserializer],
-      ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG -> classOf[StringDeserializer])
-    val messages = KafkaUtils.createDirectStream[String, String](
-      ssc,
-      LocationStrategies.PreferConsistent,
-      ConsumerStrategies.Subscribe[String, String](topicsSet, kafkaParams)).map(_.value).map(_.stripPrefix("\"").trim).map(_.stripSuffix("\"").trim)
+//    val topicsSet = topics.split(",").toSet
+//    val kafkaParams = Map[String, Object](
+//      ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG -> brokers,
+//      ConsumerConfig.GROUP_ID_CONFIG -> groupId,
+//      ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG -> classOf[StringDeserializer],
+//      ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG -> classOf[StringDeserializer])
+//    val messages = KafkaUtils.createDirectStream[String, String](
+//      ssc,
+//      LocationStrategies.PreferConsistent,
+//      ConsumerStrategies.Subscribe[String, String](topicsSet, kafkaParams)).map(_.value).map(_.stripPrefix("\"").trim).map(_.stripSuffix("\"").trim)
+
+    val messages = ssc.textFileStream("/home/ronald/data")
+
+//    messages.print()
 
     val inputLines = messages.map(_.split(","))
 
@@ -80,17 +84,17 @@ object PredictKMeans {
         emptyRDD.reset()
       }
 
-      val points = rdd.map(_(1).split(" ").map(_.toDouble)).map(x=>Vectors.dense(x))
+      val points = rdd.map(_(0).split(" ").map(_.toDouble)).map(x=>Vectors.dense(x))
       model.update(points, 1.0, "batches")
-      val modelCenters = model.clusterCenters
-      val reference = checkPrediction(realCenters, modelCenters)
+//      val modelCenters = model.clusterCenters
+//      val reference = checkPrediction(realCenters, modelCenters)
       for (i <- rdd) {
         count.add(1)
-        val prediction = model.predict(Vectors.dense(i(1).split(" ").map(_.toDouble)))
-        val target = i(2).toInt
-        if (prediction==reference(target)) {
-          correct.add(1)
-        }
+//        val prediction = model.predict(Vectors.dense(i(0).split(" ").map(_.toDouble)))
+//        val target = i(1).toInt
+//        if (prediction==reference(target)) {
+//          correct.add(1)
+//        }
       }
     })
 
@@ -100,7 +104,7 @@ object PredictKMeans {
     ssc.stop()
 
     println("Number of messages: "+ count.value)
-    println("Number of correct predictions: "+ correct.value)
+//    println("Number of correct predictions: "+ correct.value)
     println("Number of empty RDDs: "+ emptyRDD.value)
   }
 
